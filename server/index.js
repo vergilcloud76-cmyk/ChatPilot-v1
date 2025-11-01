@@ -21,3 +21,18 @@ app.use('/webhook/telegram', webhookRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+import express from 'express';
+import { connectDB } from './config/db.js';
+import { MONGO_URI } from './config/env.js';
+import botRoutes from './routes/bot.js';
+
+const app = express();
+app.use(express.json());
+
+connectDB();
+
+app.use('/api/bot', botRoutes);
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
