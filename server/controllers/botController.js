@@ -1,10 +1,18 @@
-import { getAIResponse } from "../ai/openaiService.js";
+import OpenAI from 'openai';
+import { OPENAI_API_KEY } from '../config/env.js';
 
-export async function handleMessage(req, res) {
+const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY
+});
+
+export async function handleBotRequest(req, res) {
   const { prompt } = req.body;
   try {
-    const response = await getAIResponse(prompt);
-    res.json({ response });
+    const response = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [{ role: 'user', content: prompt }],
+    });
+    res.json({ response: response.choices[0].message.content });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
