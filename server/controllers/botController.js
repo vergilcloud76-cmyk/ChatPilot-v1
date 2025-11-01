@@ -1,13 +1,17 @@
-const { generateResponse } = require('../ai/openaiService');
+const { Configuration, OpenAIApi } = require('openai');
+const { OPENAI_API_KEY } = require('../config/env.js');
 
-async function handleBotRequest(req, res) {
-  const { prompt } = req.body;
-  try {
-    const response = await generateResponse(prompt);
-    res.json({ response });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+const configuration = new Configuration({
+  apiKey: OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
+
+async function generateResponse(prompt) {
+  const completion = await openai.createChatCompletion({
+    model: "gpt-3.5-turbo",
+    messages: [{ role: "user", content: prompt }],
+  });
+  return completion.data.choices[0].message.content;
 }
 
-module.exports = { handleBotRequest };
+module.exports = { generateResponse };
