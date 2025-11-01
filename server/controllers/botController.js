@@ -1,12 +1,13 @@
-import { getAIResponse } from '../ai/openaiService.js';
+const { generateResponse } = require('../ai/openaiService');
 
-export const handleMessage = async (req, res) => {
+async function handleBotRequest(req, res) {
+  const { prompt } = req.body;
   try {
-    const { message } = req.body;
-    const reply = await getAIResponse(message);
-    res.json({ reply });
+    const response = await generateResponse(prompt);
+    res.json({ response });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Something went wrong' });
+    res.status(500).json({ error: err.message });
   }
-};
+}
+
+module.exports = { handleBotRequest };
