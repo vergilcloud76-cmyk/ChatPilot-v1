@@ -1,8 +1,8 @@
-import express from 'express';
-import { handleMessage } from '../controllers/botController.js';
+const express = require('express');
+const { handleMessage } = require('../controllers/botController');
 
 const router = express.Router();
 
 router.post('/message', handleMessage);
 
-export default router;
+module.exports = router;
