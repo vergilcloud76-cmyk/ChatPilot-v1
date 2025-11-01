@@ -1,8 +1,8 @@
-const express = require('express');
-const { handleMessage } = require('../controllers/botController');
+import express from 'express';
+import { handleBotRequest } from '../controllers/botController.js';
 
 const router = express.Router();
 
-router.post('/message', handleMessage);
+router.post('/message', handleBotRequest);
 
-module.exports = router;
+export default router;
