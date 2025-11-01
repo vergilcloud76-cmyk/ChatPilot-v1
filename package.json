@@ -1,11 +1,9 @@
 {
   "name": "chatpilot",
   "version": "1.0.0",
-  "type": "module",
   "main": "server/index.js",
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "nodemon server/index.js"
+    "start": "node server/index.js"
   },
   "dependencies": {
     "axios": "^1.6.0",
@@ -14,9 +12,6 @@
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.3.2",
-    "openai": "^4.9.1"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
+    "openai": "^4.9.0"
   }
 }
