@@ -1,12 +1,16 @@
-import OpenAI from 'openai';
-import { OPENAI_KEY } from '../config/env.js';
+const OpenAI = require('openai');
+const { OPENAI_API_KEY } = require('../config/env');
 
-const openai = new OpenAI({ apiKey: OPENAI_KEY });
+const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY
+});
 
-export const getAIResponse = async (prompt) => {
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4',
-    messages: [{ role: 'user', content: prompt }],
+async function generateResponse(prompt) {
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [{ role: "user", content: prompt }]
   });
-  return response.choices[0].message.content;
-};
+  return completion.choices[0].message.content;
+}
+
+module.exports = { generateResponse };
