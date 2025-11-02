@@ -1,15 +1,17 @@
 import express from 'express';
 import { connectDB } from './db.js';
+import myRoute from './routes/myRoute.js'; // تأكد من المسار الصحيح
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
-// اتصل بقاعدة البيانات
 connectDB();
 
-app.get('/', (req, res) => {
-  res.send('Server is running!');
-});
+// Middleware
+app.use(express.json());
+
+// ربط Route الرئيسي بالمحتوى
+app.use('/', myRoute); // أي طلب إلى / سيذهب مباشرة للـ Route
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT} 🚀`);
