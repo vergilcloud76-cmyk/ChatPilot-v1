@@ -1,16 +1,16 @@
-import 'dotenv/config';
 import express from 'express';
 import { connectDB } from './db.js';
-import botRoutes from './routes/bot.js';
 
 const app = express();
-app.use(express.json());
+const PORT = process.env.PORT || 3000;
 
+// اتصل بقاعدة البيانات
 connectDB();
 
-app.use('/api/bot', botRoutes);
+app.get('/', (req, res) => {
+  res.send('Server is running!');
+});
 
-const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} ✅`);
+  console.log(`Server running on port ${PORT} 🚀`);
 });
