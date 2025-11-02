@@ -4,27 +4,23 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import mainRoutes from './routes/main.js';
 import { connectDB } from './db.js';
+import path from 'path';
 
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// حماية HTTP headers
 app.use(helmet());
-
-// Logging
 app.use(morgan('combined'));
-
-// تحليل JSON
 app.use(express.json());
+app.use(express.static(path.join(process.cwd(), 'server/public')));
 
-// الاتصال بقاعدة البيانات
+// الاتصال بMongoDB
 connectDB();
 
 // استخدام Route الرئيسي
 app.use('/', mainRoutes);
 
-// تشغيل السيرفر
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT} 🚀`);
 });
