@@ -1,77 +1,49 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { getDynamicData } from '../db.js';
 
 const router = express.Router();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// إعداد CORS
-router.use(cors({
-  origin: '*', // أو حدد موقعك فقط
-  methods: ['GET','POST','PUT','DELETE'],
-}));
+// حماية CORS
+router.use(cors({ origin: '*' }));
 
 // Rate Limiter
 const limiter = rateLimit({
   windowMs: 1 * 60 * 1000, // دقيقة
-  max: 60, // أقصى 60 طلب بالدقيقة
-  message: { status: 'error', message: 'عدد الطلبات تجاوز الحد المسموح به' }
+  max: 100,
+  message: { status: 'error', message: 'عدد الطلبات تجاوز الحد المسموح' }
 });
 router.use(limiter);
 
-// Middleware لتسجيل الطلبات
+// Logging
 router.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
   next();
 });
 
-// الصفحة الرئيسية
+// الصفحة الرئيسية (Front-end ديناميكية)
 router.get('/', (req, res) => {
-  res.json({
-    status: 'success',
-    message: 'مرحبًا! هذه الصفحة الرئيسية من Route الاحترافي الخاص بي.',
-    timestamp: new Date(),
-    routes: ['/about', '/contact', '/api/data']
-  });
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// صفحة About
-router.get('/about', (req, res) => {
-  res.json({
-    status: 'success',
-    title: 'عن الموقع',
-    description: 'نسخة احترافية من Route مع حماية وLogging وRate Limiter.'
-  });
+// API لجلب بيانات ديناميكية من MongoDB
+router.get('/api/data', async (req, res) => {
+  try {
+    const data = await getDynamicData(); // ترجع بيانات من DB
+    res.json({ status: 'success', count: data.length, data });
+  } catch (err) {
+    res.status(500).json({ status: 'error', message: err.message });
+  }
 });
 
-// صفحة Contact
-router.get('/contact', (req, res) => {
-  res.json({
-    status: 'success',
-    email: 'support@myapp.com',
-    phone: '+218 945 507 030'
-  });
-});
-
-// API بيانات تجريبية
-router.get('/api/data', (req, res) => {
-  const data = [
-    { id: 1, name: 'منتج 1', price: 10 },
-    { id: 2, name: 'منتج 2', price: 20 }
-  ];
-  res.json({
-    status: 'success',
-    count: data.length,
-    data
-  });
-});
-
-// أي Route غير موجود
+// 404 لأي Route آخر
 router.all('*', (req, res) => {
-  res.status(404).json({
-    status: 'error',
-    message: 'الصفحة المطلوبة غير موجودة',
-    path: req.originalUrl
-  });
+  res.status(404).json({ status: 'error', message: 'الصفحة غير موجودة', path: req.originalUrl });
 });
 
 export default router;
