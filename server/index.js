@@ -1,18 +1,30 @@
 import express from 'express';
+import dotenv from 'dotenv';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import mainRoutes from './routes/main.js';
 import { connectDB } from './db.js';
-import myRoute from './routes/myRoute.js'; // تأكد من المسار الصحيح
 
+dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-connectDB();
+// حماية HTTP headers
+app.use(helmet());
 
-// Middleware
+// Logging
+app.use(morgan('combined'));
+
+// تحليل JSON
 app.use(express.json());
 
-// ربط Route الرئيسي بالمحتوى
-app.use('/', myRoute); // أي طلب إلى / سيذهب مباشرة للـ Route
+// الاتصال بقاعدة البيانات
+connectDB();
 
+// استخدام Route الرئيسي
+app.use('/', mainRoutes);
+
+// تشغيل السيرفر
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT} 🚀`);
 });
