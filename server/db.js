@@ -1,8 +1,10 @@
+// server/db.js
 import mongoose from 'mongoose';
+import { MONGO_URI } from './config/env.js';
 
-export const connectDB = async () => {
+const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
+    await mongoose.connect(MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
@@ -12,3 +14,5 @@ export const connectDB = async () => {
     process.exit(1);
   }
 };
+
+export default connectDB;
