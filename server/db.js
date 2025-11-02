@@ -1,4 +1,3 @@
-// server/db.js
 import mongoose from 'mongoose';
 import { MONGO_URI } from './config/env.js';
 
