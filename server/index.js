@@ -1,18 +1,19 @@
 import express from "express";
-import helmet from "helmet";
-import morgan from "morgan";
-import dotenv from "dotenv";
-import connectDB from "./src/config/db.js";
-import mainRoute from "./src/routes/main.js";
-
-dotenv.config();
-connectDB();
+import cors from "cors";
+import bodyParser from "body-parser";
+import "./src/config/env.js";
+import { connectDB } from "./src/config/db.js";
+import apiRoutes from "./src/routes/api.js";
+import { initBots } from "./src/controllers/botController.js";
 
 const app = express();
-app.use(helmet());
-app.use(morgan("dev"));
-app.use(express.json());
-app.use("/", mainRoute);
+app.use(cors());
+app.use(bodyParser.json());
 
-const PORT = process.env.PORT || 5000;
+connectDB();
+initBots(app);
+
+app.use("/api", apiRoutes);
+
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT} 🚀`));
