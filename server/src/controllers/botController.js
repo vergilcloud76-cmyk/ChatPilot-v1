@@ -1,32 +1,41 @@
-import botService from "../services/botService.js";
+import TelegramBot from "node-telegram-bot-api";
+import Message from "../models/Message.js";
+import { generateAIResponse } from "./aiController.js";
+import axios from "axios";
 
-export const getBotStatus = async (req, res) => {
-  try {
-    const status = botService.getStatus();
-    res.json(status);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+export const initBots = (app) => {
+  // Telegram
+  const tgBot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
+  tgBot.on("message", async (msg) => {
+    const chatId = msg.chat.id;
+    const text = msg.text;
+    await Message.create({ platform: "telegram", chatId, text });
+    const aiReply = await generateAIResponse(text);
+    tgBot.sendMessage(chatId, aiReply);
+  });
+
+  // WhatsApp webhook
+  app.post("/webhook/whatsapp", async (req, res) => {
+    const { from, body } = req.body;
+    await Message.create({ platform: "whatsapp", chatId: from, text: body });
+    const aiReply = await generateAIResponse(body);
+    await axios.post("https://api.whatsapp.com/sendMessage", {
+      to: from,
+      message: aiReply,
+      api_key: process.env.WHATSAPP_API_KEY
+    });
+    res.sendStatus(200);
+  });
+
+  // Facebook webhook
+  app.post("/webhook/facebook", async (req, res) => {
+    const { sender, message } = req.body;
+    await Message.create({ platform: "facebook", chatId: sender.id, text: message.text });
+    const aiReply = await generateAIResponse(message.text);
+    await axios.post(`https://graph.facebook.com/v16.0/me/messages?access_token=${process.env.FACEBOOK_PAGE_TOKEN}`, {
+      recipient: { id: sender.id },
+      message: { text: aiReply }
+    });
+    res.sendStatus(200);
+  });
 };
-
-export const runBotTask = async (req, res) => {
-  try {
-    const result = await botService.runTask(req.body);
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-const TelegramBot = require('node-telegram-bot-api');
-const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
-
-bot.on('message', async (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text;
-
-  await saveMessage({ platform: 'telegram', chatId, text });
-
-  // رد تلقائي باستخدام الذكاء الاصطناعي
-  const aiResponse = await generateAIResponse(text);
-  bot.sendMessage(chatId, aiResponse);
-});
