@@ -1,12 +1,24 @@
-import { Configuration, OpenAIApi } from "openai";
+import OpenAI from "openai";
 
-const configuration = new Configuration({ apiKey: process.env.OPENAI_API_KEY });
-const openai = new OpenAIApi(configuration);
+const client = new OpenAI({
+ apiKey: process.env.OPENAI_API_KEY
+});
 
-export const generateAIResponse = async (userMessage) => {
-  const response = await openai.createChatCompletion({
-    model: "gpt-4",
-    messages: [{ role: "user", content: userMessage }]
-  });
-  return response.data.choices[0].message.content;
+export const askAI = async (req, res) => {
+ try {
+   const { message } = req.body;
+
+   const response = await client.chat.completions.create({
+     model: "gpt-4.1-mini",
+     messages: [
+       { role: "system", content: "You are an assistant helping a social media automation bot." },
+       { role: "user", content: message }
+     ]
+   });
+
+   res.json({ reply: response.choices[0].message.content });
+ } catch (error) {
+   console.error("AI Error:", error);
+   res.status(500).json({ error: "AI request failed" });
+ }
 };
