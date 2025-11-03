@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import { initBots } from "./src/controllers/botController.js";
+import "./controllers/botController.js";
 
 dotenv.config();
 
