@@ -1,20 +1,13 @@
-# استخدم Node Alpine صغير وخفيف
 FROM node:20-alpine
 
-# أنشئ مجلد العمل
-WORKDIR /app
+WORKDIR /app/server
 
-# انسخ package.json و package-lock.json
 COPY server/package*.json ./
 
-# ثبّت الباكجات
 RUN npm install
 
-# انسخ باقي المشروع
-COPY . .
+COPY server ./
 
-# عرّف البورت
-EXPOSE 5000
+EXPOSE 3000
 
-# شغّل السيرفر
-CMD ["npm", "start"]
+CMD ["node", "index.js"]
