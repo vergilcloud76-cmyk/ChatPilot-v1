@@ -5,72 +5,56 @@ import OpenAI from "openai";
 dotenv.config();
 
 let bot = null;
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// تخزين المحادثات لكل مستخدم
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const userConversations = new Map();
 
-export default function initBot() {
-  if (bot) {
-    console.log("⚠️ Bot already running, skipping init...");
-    return bot;
-  }
+export default function initBot(app) {
+  if (bot) return bot;
 
   const TOKEN = process.env.TELEGRAM_TOKEN;
   if (!TOKEN) {
-    console.error("❌ Error: TELEGRAM_TOKEN not found in .env");
+    console.error("❌ TELEGRAM_TOKEN not found");
     return;
   }
 
-  bot = new TelegramBot(TOKEN, { polling: true });
-  console.log("🤖 Telegram Bot Started ✅");
+  bot = new TelegramBot(TOKEN); // بدون polling
+  const WEBHOOK_URL = `${process.env.SERVER_URL}/bot${TOKEN}`;
+  
+  bot.setWebHook(WEBHOOK_URL);
+  console.log("🤖 Telegram Bot Webhook Started ✅");
 
-  // رسالة الترحيب /start
+  // استقبال الرسائل من Telegram
+  app.post(`/bot${TOKEN}`, (req, res) => {
+    bot.processUpdate(req.body);
+    res.sendStatus(200);
+  });
+
+  // رسالة /start
   bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
-    bot.sendMessage(
-      chatId,
-      "🔥 أهلا بيك في ChatPilot Bot!\nاكتب أي شيء وبنرد عليك 😉"
-    );
-
-    // تهيئة ذاكرة المستخدم
+    bot.sendMessage(chatId, "🔥 أهلا بيك في ChatPilot Bot!\nاكتب أي شيء وبنرد عليك 😉");
     userConversations.set(chatId, []);
   });
 
-  // رد على أي رسالة نصية
+  // الرد على أي رسالة نصية
   bot.on("message", async (msg) => {
     const chatId = msg.chat.id;
     const userMessage = msg.text;
-
     if (userMessage === "/start") return;
-
-    // تهيئة ذاكرة المستخدم إذا لم تكن موجودة
-    if (!userConversations.has(chatId)) {
-      userConversations.set(chatId, []);
-    }
-
-    // إضافة رسالة المستخدم إلى الذاكرة
+    if (!userConversations.has(chatId)) userConversations.set(chatId, []);
     const conversation = userConversations.get(chatId);
     conversation.push({ role: "user", content: userMessage });
 
     try {
-      // إرسال المحادثة كلها إلى OpenAI لإبقاء السياق
       const response = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: conversation,
       });
-
       const reply = response.choices[0].message.content;
-
-      // إضافة رد البوت إلى الذاكرة
       conversation.push({ role: "assistant", content: reply });
-
       bot.sendMessage(chatId, reply);
     } catch (error) {
-      console.error("❌ Error from OpenAI:", error.message);
+      console.error("❌ OpenAI error:", error.message);
       bot.sendMessage(chatId, "⚠️ حصل خطأ حاول مرة ثانية.");
     }
   });
