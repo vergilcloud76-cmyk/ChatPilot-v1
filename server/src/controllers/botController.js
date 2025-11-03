@@ -2,25 +2,35 @@ import TelegramBot from "node-telegram-bot-api";
 import dotenv from "dotenv";
 dotenv.config();
 
-const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
+let bot = null; // منع تشغيل البوت مرتين
 
-// رسالة الترحيب بالأمر start
-bot.onText(/\/start/, (msg) => {
-  const chatId = msg.chat.id;
-  bot.sendMessage(chatId, `👋 أهلا بيك في البوت!
-اكتب أي شي وبنرد عليك 😎`);
-});
+export default function initBot() {
+  if (bot) {
+    console.log("⚠️ Bot already running, skipping init...");
+    return bot;
+  }
 
-// رد على أي رسالة نصية
-bot.on("message", (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text;
+  const TOKEN = process.env.TELEGRAM_TOKEN;
 
-  // تجاهل أمر /start لأنه فوق ردينا عليه
-  if (text === "/start") return;
+  if (!TOKEN) {
+    console.error("❌ Error: TELEGRAM_TOKEN not found in .env");
+    return;
+  }
 
-  bot.sendMessage(chatId, `📩 استلمت رسالتك:
-"${text}"`);
-});
+  bot = new TelegramBot(TOKEN, { polling: true });
 
-export default bot;
+  console.log("🤖 Telegram Bot Started ✅");
+
+  // welcome /start
+  bot.onText(/\/start/, (msg) => {
+    bot.sendMessage(msg.chat.id, "🔥 أهلا بيك في ChatPilot Bot!\nاكتب أي شيء وبنرد عليك 😉");
+  });
+
+  // reply to any text
+  bot.on("message", (msg) => {
+    if (msg.text === "/start") return;
+    bot.sendMessage(msg.chat.id, `📩 استلمت رسالتك:\n"${msg.text}"`);
+  });
+
+  return bot;
+}
