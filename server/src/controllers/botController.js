@@ -1,6 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
 import Message from "../models/Message.js";
-import { generateAIResponse } from "./aiController.js";
+import { askAI } from "./aiController.js";
 import axios from "axios";
 
 export const initBots = (app) => {
@@ -10,7 +10,7 @@ export const initBots = (app) => {
     const chatId = msg.chat.id;
     const text = msg.text;
     await Message.create({ platform: "telegram", chatId, text });
-    const aiReply = await generateAIResponse(text);
+    const aiReply = await askAI({ body: { message: text } }, { json: (data) => data });
     tgBot.sendMessage(chatId, aiReply);
   });
 
@@ -18,7 +18,7 @@ export const initBots = (app) => {
   app.post("/webhook/whatsapp", async (req, res) => {
     const { from, body } = req.body;
     await Message.create({ platform: "whatsapp", chatId: from, text: body });
-    const aiReply = await generateAIResponse(body);
+    const aiReply = await askAI({ body: { message: text } }, { json: (data) => data });
     await axios.post("https://api.whatsapp.com/sendMessage", {
       to: from,
       message: aiReply,
@@ -31,7 +31,7 @@ export const initBots = (app) => {
   app.post("/webhook/facebook", async (req, res) => {
     const { sender, message } = req.body;
     await Message.create({ platform: "facebook", chatId: sender.id, text: message.text });
-    const aiReply = await generateAIResponse(message.text);
+    const aiReply = await askAI({ body: { message: text } }, { json: (data) => data });
     await axios.post(`https://graph.facebook.com/v16.0/me/messages?access_token=${process.env.FACEBOOK_PAGE_TOKEN}`, {
       recipient: { id: sender.id },
       message: { text: aiReply }
