@@ -1,1 +1,21 @@
+{
+  "name": "chatpilot-server",
+  "version": "1.0.0",
+  "description": "Backend server for ChatPilot bot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^7.3.1",
+    "dotenv": "^16.3.1",
+    "helmet": "^7.0.0",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
 
