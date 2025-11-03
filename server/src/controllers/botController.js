@@ -1,44 +1,26 @@
 import TelegramBot from "node-telegram-bot-api";
 import dotenv from "dotenv";
-import OpenAI from "openai";
-
 dotenv.config();
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
+
+// رسالة الترحيب بالأمر start
+bot.onText(/\/start/, (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, `👋 أهلا بيك في البوت!
+اكتب أي شي وبنرد عليك 😎`);
 });
 
-let bot;
+// رد على أي رسالة نصية
+bot.on("message", (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text;
 
-export function initBots() {
-  if (!process.env.TELEGRAM_TOKEN) {
-    console.error("EFATAL: Telegram Bot Token not provided!");
-    return;
-  }
+  // تجاهل أمر /start لأنه فوق ردينا عليه
+  if (text === "/start") return;
 
-  bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
+  bot.sendMessage(chatId, `📩 استلمت رسالتك:
+"${text}"`);
+});
 
-  bot.on("message", async (msg) => {
-    const chatId = msg.chat.id;
-    const text = msg.text;
-
-    if (!text) return;
-
-    try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: text }]
-      });
-
-      const reply = response.choices[0].message.content;
-      bot.sendMessage(chatId, reply);
-    } catch (error) {
-      console.error("AI Error:", error);
-      bot.sendMessage(chatId, "⚠️ حدث خطأ في معالجة الرسالة.");
-    }
-  });
-
-  console.log("Telegram Bot with OpenAI started ✅");
-}
-
-export { bot };
+export default bot;
