@@ -1,5 +1,6 @@
 import express from "express";
-import TelegramBot from "node-telegram-bot-api";
+import { initBots } from "./src/controllers/botController.js";
+initBots();
 
 const app = express();
 app.use(express.json());
