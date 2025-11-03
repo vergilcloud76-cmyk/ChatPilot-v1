@@ -4,7 +4,7 @@ import bodyParser from "body-parser";
 import "./src/config/env.js";
 import { connectDB } from "./src/config/db.js";
 import apiRoutes from "./src/routes/api.js";
-import { initBots } from "./src/controllers/botController.js";
+import initBot from "./src/controllers/botController.js";
 
 const app = express();
 app.use(cors());
