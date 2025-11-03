@@ -7,18 +7,18 @@ import apiRoutes from "./src/routes/api.js";
 import initBot from "./src/controllers/botController.js";
 
 dotenv.config();
-
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// Database
 connectDB();
-
-// Init Telegram Bot
-initBot();
+initBot(app);  // تمرير app للبوت
 
 app.use("/api", apiRoutes);
+
+app.get("/", (req, res) => {
+  res.send("Server running 🚀");
+});
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT} 🚀`));
