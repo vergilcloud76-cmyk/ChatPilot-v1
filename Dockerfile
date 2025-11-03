@@ -1,20 +1,19 @@
-# استخدم نسخة Node.js خفيفة
 FROM node:20-alpine
 
-# أنشئ مجلد العمل
+# مجلد العمل داخل الحاوية
 WORKDIR /app
 
-# انسخ ملفات المشروع الأساسية لتثبيت الحزم
-COPY package*.json ./
+# انسخ ملفات package من server
+COPY server/package*.json ./
 
-# ثبّت الحزم
+# ثبت الباكجات
 RUN npm install
 
-# انسخ باقي الملفات
+# انسخ باقي المشروع كله
 COPY . .
 
-# افتح البورت الذي يستخدمه التطبيق
+# حدد المنفذ
 EXPOSE 10000
 
-# أمر التشغيل
+# شغّل التطبيق
 CMD ["node", "server/index.js"]
