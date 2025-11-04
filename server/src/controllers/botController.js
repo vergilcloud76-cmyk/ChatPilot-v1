@@ -32,7 +32,6 @@ export default async function initBot() {
     return;
   }
 
-  // التحقق من أن السيرفر URL يعمل
   try {
     await fetch(SERVER_URL);
   } catch (err) {
@@ -43,7 +42,6 @@ export default async function initBot() {
   bot = new TelegramBot(TOKEN);
   const webhookUrl = `${SERVER_URL}/bot${TOKEN}`;
 
-  // ضبط Webhook
   try {
     await bot.setWebHook(webhookUrl);
     console.log("🤖 Telegram Bot Webhook Started ✅ at", webhookUrl);
@@ -52,17 +50,12 @@ export default async function initBot() {
     return;
   }
 
-  // رسالة الترحيب /start
   bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
-    bot.sendMessage(
-      chatId,
-      "🔥 أهلا بيك في ChatPilot Bot!\nاكتب أي شيء وبنرد عليك 😉"
-    );
+    bot.sendMessage(chatId, "🔥 أهلا بيك في ChatPilot Bot!\nاكتب أي شيء وبنرد عليك 😉");
     userConversations.set(chatId, []);
   });
 
-  // الرد على أي رسالة نصية
   bot.on("message", async (msg) => {
     const chatId = msg.chat.id;
     const userMessage = msg.text;
@@ -77,17 +70,17 @@ export default async function initBot() {
     conversation.push({ role: "user", content: userMessage });
 
     try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4.1-mini",
         messages: conversation,
       });
 
-      const reply = response.choices[0].message.content;
+      const reply = completion.choices[0].message?.content || "⚠️ مافيش رد من الذكاء الاصطناعي";
       conversation.push({ role: "assistant", content: reply });
       bot.sendMessage(chatId, reply);
     } catch (error) {
       console.error("❌ Error from OpenAI:", error.message);
-      bot.sendMessage(chatId, "⚠️ حصل خطأ حاول مرة ثانية.");
+      bot.sendMessage(chatId, "⚠️ حصل خطأ، حاول مرة ثانية.");
     }
   });
 
