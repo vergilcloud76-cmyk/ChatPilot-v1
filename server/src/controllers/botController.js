@@ -1,11 +1,10 @@
 import TelegramBot from "node-telegram-bot-api";
 import dotenv from "dotenv";
 import OpenAI from "openai";
-import fetch from "node-fetch"; // للتأكد من صحة URL
 
 dotenv.config();
 
-let bot = null;
+let botInstance = null;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -14,75 +13,69 @@ const openai = new OpenAI({
 // تخزين المحادثات لكل مستخدم
 const userConversations = new Map();
 
-export default async function initBot() {
-  if (bot) {
-    console.log("⚠️ Bot already running, skipping init...");
-    return bot;
+export default function initBot(app) {
+  if (botInstance) {
+    console.log("⚠️ Bot already initialized.");
+    return botInstance;
   }
 
   const TOKEN = process.env.TELEGRAM_TOKEN;
   const SERVER_URL = process.env.SERVER_URL;
 
-  if (!TOKEN) {
-    console.error("❌ TELEGRAM_TOKEN missing in .env");
-    return;
-  }
-  if (!SERVER_URL) {
-    console.error("❌ SERVER_URL missing in .env");
+  if (!TOKEN || !SERVER_URL) {
+    console.error("❌ Missing Telegram Token or Server URL");
     return;
   }
 
-  try {
-    await fetch(SERVER_URL);
-  } catch (err) {
-    console.error("❌ SERVER_URL is not reachable:", err.message);
-    return;
-  }
-
-  bot = new TelegramBot(TOKEN);
   const webhookUrl = `${SERVER_URL}/bot${TOKEN}`;
+  botInstance = new TelegramBot(TOKEN, { webHook: { port: process.env.PORT } });
 
-  try {
-    await bot.setWebHook(webhookUrl);
-    console.log("🤖 Telegram Bot Webhook Started ✅ at", webhookUrl);
-  } catch (err) {
-    console.error("❌ Failed to set webhook:", err.message);
-    return;
-  }
+  botInstance.setWebHook(webhookUrl).then(() => {
+    console.log("✅ Webhook Set:", webhookUrl);
+  }).catch(err => {
+    console.error("❌ Webhook Error:", err.message);
+  });
 
-  bot.onText(/\/start/, (msg) => {
+  // ⬅️ Express route to receive Telegram updates
+  app.post(`/bot${TOKEN}`, (req, res) => {
+    botInstance.processWebHook(req.body);
+    res.sendStatus(200);
+  });
+
+  botInstance.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
-    bot.sendMessage(chatId, "🔥 أهلا بيك في ChatPilot Bot!\nاكتب أي شيء وبنرد عليك 😉");
+    botInstance.sendMessage(chatId, "🔥 أهلا بيك في ChatPilot Bot!\nاكتب أي شيء وبنرد عليك 😉");
     userConversations.set(chatId, []);
   });
 
-  bot.on("message", async (msg) => {
+  botInstance.on("message", async (msg) => {
     const chatId = msg.chat.id;
-    const userMessage = msg.text;
+    const text = msg.text;
 
-    if (userMessage === "/start") return;
+    if (text === "/start") return;
 
     if (!userConversations.has(chatId)) {
       userConversations.set(chatId, []);
     }
 
     const conversation = userConversations.get(chatId);
-    conversation.push({ role: "user", content: userMessage });
+    conversation.push({ role: "user", content: text });
 
     try {
-      const completion = await openai.chat.completions.create({
+      const response = await openai.chat.completions.create({
         model: "gpt-4.1-mini",
         messages: conversation,
       });
 
-      const reply = completion.choices[0].message?.content || "⚠️ مافيش رد من الذكاء الاصطناعي";
+      const reply = response.choices[0].message?.content || "⚠️ مافيش رد من AI";
       conversation.push({ role: "assistant", content: reply });
-      bot.sendMessage(chatId, reply);
-    } catch (error) {
-      console.error("❌ Error from OpenAI:", error.message);
-      bot.sendMessage(chatId, "⚠️ حصل خطأ، حاول مرة ثانية.");
+
+      botInstance.sendMessage(chatId, reply);
+    } catch (err) {
+      console.error("❌ OpenAI Error:", err.message);
+      botInstance.sendMessage(chatId, "⚠️ حصل خطأ، حاول مرة ثانية.");
     }
   });
 
-  return bot;
+  return botInstance;
 }
